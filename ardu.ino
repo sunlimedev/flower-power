@@ -61,35 +61,19 @@ void loop()
   int speed = random(3, 6);
 
   // generate random number to pick logic branch
-  int branch = random(1, 201);
+  int branch = random(0, 100);
 
   // light control branches
-  if(branch == 200)
+  if(branch == 0)
   {
     spiral_LED(pwm, levels, speed);
   }
-  /*
-  else if(branch > 190)
-  {
-    three_LED()
-  }
-  else if(branch > 140)
-  {
-    two_LED()
-  }
-  */
   else
   {
     one_LED(pwm, levels, pin0, speed);
   }
 }
 
-
-/*
-void one_LED(Adafruit_PWMServoDriver pwm, int levels[], int pin0, int speed)
-{
-  
-}
 /*
 void two_LED(Adafruit_PWMServoDriver pwm, int pin0, int pin1, int speed)
 {
@@ -105,21 +89,21 @@ void three_LED(Adafruit_PWMServoDriver pwm, int pin0, int pin1, int pin2, int sp
 // change one LED
 void one_LED(Adafruit_PWMServoDriver pwm, int levels[], int pin0, int speed)
 {
-  if(levels[pin0] <= ((MAX_BRIGHTNESS - MIN_BRIGHTNESS) / 2) + 100)
+  if(levels[pin0] == MAX_BRIGHTNESS)
   {
-    while(levels[pin0] < MAX_BRIGHTNESS)
+    for(int i = 0; i < (MAX_BRIGHTNESS - MIN_BRIGHTNESS)/50; i++)
     {
-      pwm.setPWM(pin0, 0, levels[pin0] + 50);
-      levels[pin0] += 50;
+      pwm.setPWM(pin0, 0, levels[pin0] - 50);
+      levels[pin0] -= 50;
       delay(speed * 4);
     }
   }
   else
   {
-    while(levels[pin0] > MIN_BRIGHTNESS)
+    for(int i = 0; i < (MAX_BRIGHTNESS - MIN_BRIGHTNESS)/50; i++)
     {
-      pwm.setPWM(pin0, 0, levels[pin0] - 50);
-      levels[pin0] -= 50;
+      pwm.setPWM(pin0, 0, levels[pin0] + 50);
+      levels[pin0] += 50;
       delay(speed * 4);
     }
   }
