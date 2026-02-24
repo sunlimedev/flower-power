@@ -1,21 +1,19 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
-// important constants
-const int NUM_PINS = 16;
-const int MIN_BRIGHTNESS = 100;
-const int MAX_BRIGHTNESS = 4000;
+// define important constants
+const int NUM_PINS = 16;          // number of pins in project 1-16
+const int MIN_BRIGHTNESS = 100;   // must be less than max and increment of 50
+const int MAX_BRIGHTNESS = 4000;  // must be greater than min and increment of 50
 
-// create PWM object at address 0x40 with default i2c pins
+// create PWM object at address 0x40 with default i2c pins for atmega328p
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
 
-// global array to track pin levels
+// create global array to track pin levels
 int levels[NUM_PINS];
 
-// lighting functions
-void one_LED(Adafruit_PWMServoDriver pwm, int levels[], int pin0, int speed);
-void two_LED(Adafruit_PWMServoDriver pwm, int levels[], int pin0, int pin1, int speed);
-void three_LED(Adafruit_PWMServoDriver pwm, int levels[], int pin0, int pin1, int pin2, int speed);
+// declare lighting functions
+void single_LED(Adafruit_PWMServoDriver pwm, int levels[], int pin, int speed);
 void spiral_LED(Adafruit_PWMServoDriver pwm, int levels[], int speed);
 
 // setup function, runs once
@@ -28,7 +26,7 @@ void setup()
   pwm.begin();
 
   // set PWM frequency to 1000Hz to reduce flicker
-  pwm.setPWMFreq(1000);
+  pwm.setPWMFreq(1600);
 
   // set seed for random
   randomSeed(1803119713);
@@ -44,18 +42,8 @@ void setup()
 // loop function, manages lighting
 void loop()
 {
-  // select 3 random pins
-  int pin0 = random(0, NUM_PINS);
-  int pin1 = random(0, NUM_PINS);
-  while(pin1 == pin0)
-  {
-    pin1 = random(0, NUM_PINS);
-  }
-  int pin2 = random(0, NUM_PINS);
-  while(pin2 == pin0 || pin2 == pin1)
-  {
-    pin2 = random(0, NUM_PINS);
-  }
+  // select a random pin
+  int pin = random(0, NUM_PINS);
 
   // generate random number to set transition speed
   int speed = random(3, 6);
@@ -70,51 +58,72 @@ void loop()
   }
   else
   {
-    one_LED(pwm, levels, pin0, speed);
+    single_LED(pwm, levels, pin, speed);
   }
 }
 
-/*
-void two_LED(Adafruit_PWMServoDriver pwm, int pin0, int pin1, int speed)
+// change single LED
+void single_LED(Adafruit_PWMServoDriver pwm, int levels[], int pin, int speed)
 {
-
-}
-
-void three_LED(Adafruit_PWMServoDriver pwm, int pin0, int pin1, int pin2, int speed)
-{
-
-}
-*/
-
-// change one LED
-void one_LED(Adafruit_PWMServoDriver pwm, int levels[], int pin0, int speed)
-{
-  if(levels[pin0] == MAX_BRIGHTNESS)
+  // decrease random amount from max brightness
+  if(levels[pin] == MAX_BRIGHTNESS)
   {
-    for(int i = 0; i < (MAX_BRIGHTNESS - MIN_BRIGHTNESS)/50; i++)
+    int range = (MAX_BRIGHTNESS - MIN_BRIGHTNESS)/50;
+    int travel = random(0, range);
+
+    for(int i = 0; i < travel; i++)
     {
-      pwm.setPWM(pin0, 0, levels[pin0] - 50);
-      levels[pin0] -= 50;
+      pwm.setPWM(pin, 0, levels[pin] - 50);
+      levels[pin] -= 50;
       delay(speed * 4);
     }
   }
+  // increase random amount from min brightness
+  else if(levels[pin] == MIN_BRIGHTNESS)
+  {
+    int range = (MAX_BRIGHTNESS - MIN_BRIGHTNESS)/50;
+    int travel = random(0, range);
+
+    for(int i = 0; i < travel; i++)
+    {
+      pwm.setPWM(pin, 0, levels[pin] + 50);
+      levels[pin] += 50;
+      delay(speed * 4);
+    }
+  }
+  // decrease or increase random amount from current brightness
   else
   {
-    for(int i = 0; i < (MAX_BRIGHTNESS - MIN_BRIGHTNESS)/50; i++)
+    // decrease
+    if(random(0,2) == 0)
     {
-      pwm.setPWM(pin0, 0, levels[pin0] + 50);
-      levels[pin0] += 50;
-      delay(speed * 4);
+      int range = (levels[pin] - MIN_BRIGHTNESS)/50;
+      int travel = random(0, range);
+
+      for(int i = 0; i < travel; i++)
+      {
+        pwm.setPWM(pin, 0, levels[pin] - 50);
+        levels[pin] -= 50;
+        delay(speed * 4);
+      }
+    }
+    // increase
+    else
+    {
+      int range = (MAX_BRIGHTNESS - levels[pin])/50;
+      int travel = random(0, range);
+
+      for(int i = 0; i < travel; i++)
+      {
+        pwm.setPWM(pin, 0, levels[pin] + 50);
+        levels[pin] += 50;
+        delay(speed * 4);
+      }
     }
   }
 }
 
-void two_LED(Adafruit_PWMServoDriver pwm, int pin0, int pin1, int speed)
-{
-
-}
-
-// good thing that you shouldnt fuck up
+// gently increase all LEDs to max, then decrease to min
 void spiral_LED(Adafruit_PWMServoDriver pwm, int levels[], int speed)
 {
   // gradually increase all LEDs to max
